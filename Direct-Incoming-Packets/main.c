@@ -22,19 +22,19 @@
 #include <rte_lcore.h>
 #include <rte_debug.h>
 
-int
+    int
 main(int argc, char **argv)
 {
-	int ret;
-	unsigned lcore_id;
+    int ret;
+    unsigned lcore_id;
 
-	ret = rte_eal_init(argc, argv);
-	if (ret < 0)
-		rte_panic("Cannot init EAL\n");
+    ret = rte_eal_init(argc, argv);
+    if (ret < 0)
+        rte_panic("Cannot init EAL\n");
 
 
-	/* TODO: setup the aplication lcores */
-	
+    /* TODO: setup the aplication lcores */
+
     rte_eal_mp_wait_lcore();
-	return 0;
+    return 0;
 }
