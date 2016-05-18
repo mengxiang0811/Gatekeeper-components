@@ -61,6 +61,11 @@ main(int argc, char **argv)
     int ret;
     unsigned lcore_id;
 
+    /* TODO: define the format of the command, and parse the command; 
+     *      create the configuration file for the gatekeeperd server!
+     * */
+    struct gatekeeperd_server_conf *gatekeeperd_conf = gatekeeperd_get_server_conf(argv[1], argv[2]);
+
     printf("initializing DPDK\n");
     
     rte_set_log_level(RTE_LOG_NOTICE);
