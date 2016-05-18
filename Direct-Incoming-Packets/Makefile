@@ -39,11 +39,12 @@ RTE_TARGET ?= x86_64-native-linuxapp-gcc
 include $(RTE_SDK)/mk/rte.vars.mk
 
 # binary name
-APP = helloworld
+APP = rss
 
 # all source are stored in SRCS-y
-SRCS-y := main.c
+SRCS-y := main.c net_common.c net_config.c
 
+CFLAGS += -I$(SRCDIR)
 CFLAGS += -O3
 CFLAGS += $(WERROR_FLAGS)
 
