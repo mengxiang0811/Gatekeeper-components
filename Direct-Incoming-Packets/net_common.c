@@ -3,6 +3,7 @@
 #include <assert.h>
 
 #include <rte_eal.h>
+
 #include <rte_lcore.h>
 #include <rte_byteorder.h>
 #include <rte_ethdev.h>

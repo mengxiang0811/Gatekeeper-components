@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _NET_COMMON_H
+#define _NET_COMMON_H
 
 #include <rte_mbuf.h>
 
@@ -34,3 +35,5 @@ gatekeeperd_init_network(uint64_t cpu_mask, uint64_t port_mask, uint8_t *out_num
 
 void
 gatekeeperd_free_network(uint64_t port_mask);
+
+#endif

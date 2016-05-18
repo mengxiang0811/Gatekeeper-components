@@ -1,10 +1,5 @@
 /*
- *  main.c
- *  
- *  This program setups the DPDK with RSS feature, i.e., 
- *  the program will create a queue for each lcore in the NIC, 
- *  and ask the NIC to hash the source and destination IP addresses 
- *  of the packets and place the packets in queues based on the hash.
+ * TODO: add License Header
  *
  *  The program references to the following materials:
  *  (1) the DPDK API documents: http://dpdk.org/doc/api/
@@ -21,25 +16,28 @@
 #include <string.h>
 #include <stdint.h>
 #include <errno.h>
-#include <sys/queue.h>
+/* Use queue(3) macros rather than rolling your own lists, whenever possible */
+#include <sys/queue.h> 
+
+#include <rte_eal.h>
 
 #include <rte_launch.h>
-#include <rte_eal.h>
 #include <rte_ethdev.h>
 #include <rte_lcore.h>
 #include <rte_per_lcore.h>
 #include <rte_log.h>
-
 #include <rte_memory.h>
 #include <rte_memzone.h>
 #include <rte_debug.h>
+#include <rte_errno.h>
 
 #include "net_common.h"
 #include "net_config.h"
 
 static volatile bool exiting = false;
 
-static void signal_handler(int signum)
+static void
+signal_handler(int signum)
 {
     if (signum == SIGINT)
         fprintf(stderr, "caught SIGINT\n");
@@ -56,9 +54,11 @@ static void signal_handler(int signum)
  * The capabilities maintainance may happen here,
  * including capabilities lookup, insertion, deletion, etc.
  *
- * The server will recieve packets, queue packets, check packets' capabilities, schedule packet, drop packets, transmit packets, etc.
+ * The server will recieve packets, queue packets, check packets' capabilities,
+ * schedule packets, drop packets, transmit packets, etc.
  */
-static int gatekeekperd_server_proc(void *arg) 
+static int
+gatekeekperd_server_proc(void *arg) 
 {
     while (!exiting) 
     {
@@ -66,7 +66,14 @@ static int gatekeekperd_server_proc(void *arg)
     return 0;
 }
 
-int main(int argc, char **argv)
+/*
+ *  This program setups the DPDK with RSS feature, i.e., 
+ *  the program will create a queue for each lcore in the NIC, 
+ *  and ask the NIC to hash the source and destination IP addresses 
+ *  of the packets and place the packets in queues based on the hash.
+ */
+int
+main(int argc, char **argv)
 {
     int ret;
     unsigned lcore_id;
@@ -78,7 +85,10 @@ int main(int argc, char **argv)
     struct gatekeeperd_server_conf *gatekeeperd_conf = gatekeeperd_get_server_conf(argv[1], argv[2]);
 
     printf("initializing DPDK\n");
-    
+ 
+    /* enable the log type */
+    rte_set_log_type(RTE_LOG_NOTICE, 1);
+    /* log in notice level */
     rte_set_log_level(RTE_LOG_NOTICE);
     
     ret = rte_eal_init(argc, argv);

@@ -1,4 +1,7 @@
-#pragma once
+#ifndef _NET_CONFIG_H
+#define _NET_CONFIG_H
+
+#include <stdint.h>
 
 #define GATEKEEPERD_MAX_PORTS (4)
 
@@ -28,3 +31,5 @@ struct gatekeeperd_server_conf
 /* function */
 struct gatekeeperd_server_conf *
 gatekeeperd_get_server_conf(const char *filename, const char *server_name);
+
+#endif
