@@ -10,6 +10,8 @@
  *  (1) the DPDK API documents: http://dpdk.org/doc/api/
  *  (2) the DPDK examples: http://dpdk.org/doc/api/examples.html
  *  (3) MICA implementation: https://github.com/efficient/mica
+ *  (4) the Symmetric Receive-side Scaling key is from: 
+ *      http://www.ndsl.kaist.edu/~kyoungsoo/papers/TR-symRSS.pdf
  *
  */
 
