@@ -8,7 +8,12 @@ struct gatekeeperd_port_conf
 	uint8_t ip_addr[4];
 };
 
-// gatekeeper server configuration
+/* 
+ * gatekeeper server configuration
+ *
+ * may incorporate IP-in-IP tunneling information,
+ * VLAN header information, etc.
+ */
 struct gatekeeperd_server_conf
 {
 	uint8_t num_ports;
@@ -16,8 +21,10 @@ struct gatekeeperd_server_conf
 	uint8_t num_threads;
 };
 
-// TODO: grantor configuration
+/* 
+ * TODO: grantor configuration
+ */
 
-// function
+/* function */
 struct gatekeeperd_server_conf *
 gatekeeperd_get_server_conf(const char *filename, const char *server_name);

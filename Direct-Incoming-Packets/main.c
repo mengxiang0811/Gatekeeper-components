@@ -13,6 +13,8 @@
  *  (4) the Symmetric Receive-side Scaling key is from: 
  *      http://www.ndsl.kaist.edu/~kyoungsoo/papers/TR-symRSS.pdf
  *
+ *  The source code uses the DPDK Coding Style:
+ *  http://dpdk.org/doc/guides/contributing/coding_style.html
  */
 
 #include <stdio.h>
@@ -48,7 +50,14 @@ static void signal_handler(int signum)
     exiting = true;
 }
 
-/* TODO: add gatekeeperd server function */
+/* 
+ * TODO: add gatekeeperd server function 
+ * 
+ * The capabilities maintainance may happen here,
+ * including capabilities lookup, insertion, deletion, etc.
+ *
+ * The server will recieve packets, queue packets, check packets' capabilities, schedule packet, drop packets, transmit packets, etc.
+ */
 static int gatekeekperd_server_proc(void *arg) 
 {
     while (!exiting) 
@@ -57,15 +66,15 @@ static int gatekeekperd_server_proc(void *arg)
     return 0;
 }
 
-    int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
     int ret;
     unsigned lcore_id;
 
-    /* TODO: define the format of the command, and parse the command; 
+    /* 
+     * TODO: define the format of the command, and parse the command; 
      *      create the configuration file for the gatekeeperd server!
-     * */
+     */
     struct gatekeeperd_server_conf *gatekeeperd_conf = gatekeeperd_get_server_conf(argv[1], argv[2]);
 
     printf("initializing DPDK\n");
@@ -76,7 +85,9 @@ main(int argc, char **argv)
     if (ret < 0)
         rte_panic("Cannot init EAL\n");
 
-    /* TODO: setup the aplication lcores */
+    /* 
+     * TODO: setup the aplication lcores 
+     */
 
     /* should be in the configuration file*/
     uint64_t cpu_mask = ((uint64_t)1 << 4) - 1;
@@ -118,7 +129,9 @@ main(int argc, char **argv)
 
     rte_eal_mp_wait_lcore();
     
-    /* TODO: release all the resources */
+    /* 
+     * TODO: release all the resources
+     */
 
     printf("finished\n");
     

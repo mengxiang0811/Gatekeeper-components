@@ -32,6 +32,9 @@ static uint8_t hash_key[RSS_HASH_KEY_LENGTH] =
     0x5A, 0x6D, 0x5A, 0x6D, 0x5A, 
 };
 
+/*
+ * used to store the queues' states on each port
+ * */
 struct gatekeeperd_queue_state 
 {
 	struct rte_mbuf *rx_mbufs[GATEKEEPERD_MAX_PKT_BURST];
@@ -60,8 +63,8 @@ static const struct rte_eth_conf gatekeeperd_port_conf = {
 	},
 	.rx_adv_conf = {
         .rss_conf = {
-            .rss_key = hash_key,
-            .rss_key_len = 40,
+            //.rss_key = hash_key, /* symmetric RSS key, but we use default ones for now */
+            //.rss_key_len = 40,
             .rss_hf = ETH_RSS_IPV4, /* IPv4 Source and Destination addresses */
         },
 	},
@@ -89,6 +92,7 @@ static const struct rte_eth_txconf gatekeeperd_tx_conf = {
 };
 
 static struct rte_mempool *gatekeeperd_pktmbuf_pool[GATEKEEPERD_MAX_NUMA_NODES];
+static struct gatekeeperd_queue_state *gatekeeperd_queue_states[GATEKEEPERD_MAX_QUEUES * GATEKEEPERD_MAX_PORTS];
 
 struct rte_mbuf *
 gatekeeperd_packet_alloc()
@@ -135,6 +139,7 @@ gatekeeperd_receive_packets(uint8_t port_id, struct rte_mbuf **mbufs, size_t *in
 	*in_out_num_mbufs = (size_t)rte_eth_rx_burst(port_id, queue, mbufs, (uint16_t)*in_out_num_mbufs);
 }
 
+/* the VLAN insertion & IP packets encapsulation may happen here */
 void
 gatekeeperd_send_packet(uint8_t port_id, struct rte_mbuf *mbuf)
 {
@@ -150,7 +155,9 @@ gatekeeperd_send_packet(uint8_t port_id, struct rte_mbuf *mbuf)
 		uint16_t count = rte_eth_tx_burst(port_id, queue, state->tx_mbufs, GATEKEEPERD_MAX_PKT_BURST);
 		state->num_tx_sent += count;
 		
-        // TODO: dropped packets stat
+        /* 
+         * TODO: dropped packets stat or some other useful stats
+         */
 
         for (; count < GATEKEEPERD_MAX_PKT_BURST; count++)
 			rte_pktmbuf_free(state->tx_mbufs[count]);
@@ -159,6 +166,7 @@ gatekeeperd_send_packet(uint8_t port_id, struct rte_mbuf *mbuf)
 	}
 }
 
+/* the VLAN insertion & IP packets encapsulation may happen here */
 void
 gatekeeperd_send_packet_flush(uint8_t port_id)
 {
@@ -171,7 +179,9 @@ gatekeeperd_send_packet_flush(uint8_t port_id)
 		uint16_t count = rte_eth_tx_burst(port_id, queue, state->tx_mbufs, state->tx_length);
 		state->num_tx_sent += count;
 		
-        // TODO: dropped packets stat
+        /*
+         * TODO: dropped packets stat or some other useful stats
+         */
 
         for (; count < state->tx_length; count++)
 			rte_pktmbuf_free(state->tx_mbufs[count]);
@@ -198,7 +208,7 @@ gatekeeperd_init_network(uint64_t cpu_mask, uint64_t port_mask, uint8_t *out_num
 
 	assert(rte_lcore_count() <= GATEKEEPERD_MAX_LCORES);
 
-	// count required queues
+	/* count required queues */
 	for (i = 0; i < rte_lcore_count(); i++)
 	{
 		if ((cpu_mask & ((uint64_t)1 << i)) != 0)
@@ -206,7 +216,7 @@ gatekeeperd_init_network(uint64_t cpu_mask, uint64_t port_mask, uint8_t *out_num
 	}
 	assert(num_queues <= GATEKEEPERD_MAX_QUEUES);
 
-	// count numa nodes
+	/* count numa nodes */
 	for (i = 0; i < rte_lcore_count(); i++)
 	{
 		uint32_t socket_id = (uint32_t)rte_lcore_to_socket_id((unsigned int)i);
@@ -215,14 +225,14 @@ gatekeeperd_init_network(uint64_t cpu_mask, uint64_t port_mask, uint8_t *out_num
 	}
 	assert(num_numa_nodes <= GATEKEEPERD_MAX_NUMA_NODES);
 
-	// initialize pktmbuf
+	/* initialize pktmbuf */
 	for (i = 0; i < num_numa_nodes; i++)
 	{
 		printf("allocating pktmbuf on node %zu... \n", i);
 		char pool_name[64];
 		snprintf(pool_name, sizeof(pool_name), "pktmbuf_pool%zu", i);
 		
-        // the maximum cache size can be adjusted in DPDK's .config file: CONFIG_RTE_MEMPOOL_CACHE_MAX_SIZE
+        /* the maximum cache size can be adjusted in DPDK's .config file: CONFIG_RTE_MEMPOOL_CACHE_MAX_SIZE */
 		const unsigned int cache_size = GATEKEEPERD_MAX_PORTS * 1024;
 		gatekeeperd_pktmbuf_pool[i] = rte_mempool_create(pool_name, GATEKEEPERD_MBUF_SIZE, GATEKEEPERD_MBUF_ENTRY_SIZE, cache_size, sizeof(struct rte_pktmbuf_pool_private), rte_pktmbuf_pool_init, NULL, rte_pktmbuf_init, NULL, (int)i, 0);
 
@@ -233,7 +243,7 @@ gatekeeperd_init_network(uint64_t cpu_mask, uint64_t port_mask, uint8_t *out_num
 		}
 	}
 
-	// initialize driver
+	/* initialize driver */
 #ifdef RTE_LIBRTE_IXGBE_PMD
 	printf("initializing PMD\n");
 	if (rte_ixgbe_pmd_init() < 0)
@@ -250,7 +260,7 @@ gatekeeperd_init_network(uint64_t cpu_mask, uint64_t port_mask, uint8_t *out_num
 		return false;
 	}
 
-	// check port and queue limits
+	/* check port and queue limits */
 	uint8_t num_ports = rte_eth_dev_count();
 	assert(num_ports <= GATEKEEPERD_MAX_PORTS);
 	*out_num_ports = num_ports;
@@ -272,7 +282,7 @@ gatekeeperd_init_network(uint64_t cpu_mask, uint64_t port_mask, uint8_t *out_num
 		}
 	}
 
-    // initialize ports
+    /* initialize ports */
 	for (port_id = 0; port_id < num_ports; port_id++)
 	{
 		if ((port_mask & ((uint64_t)1 << port_id)) == 0)
@@ -309,7 +319,7 @@ gatekeeperd_init_network(uint64_t cpu_mask, uint64_t port_mask, uint8_t *out_num
 			}
 		}
 
-		// start device
+		/* start device */
 		ret = rte_eth_dev_start(port_id);
 		if (ret < 0)
 		{
@@ -344,7 +354,9 @@ gatekeeperd_init_network(uint64_t cpu_mask, uint64_t port_mask, uint8_t *out_num
 		{
 			uint16_t queue = (uint16_t)lcore;
 
-            // is allocated by corresponding lcore more efficient???
+            /* 
+             * is allocated by corresponding lcore more efficient???
+             */
 			//gatekeeperd_queue_states[queue * GATEKEEPERD_MAX_PORTS + port_id] = gatekeeperd_eal_malloc_lcore(sizeof(struct gatekeeperd_queue_state), lcore);
 			gatekeeperd_queue_states[queue * GATEKEEPERD_MAX_PORTS + port_id] = rte_zmalloc(NULL, sizeof(struct gatekeeperd_queue_state), 0);
 		}

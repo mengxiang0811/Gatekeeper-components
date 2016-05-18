@@ -18,8 +18,9 @@ gatekeeperd_get_server_conf(const char *filename, const char *server_name)
 	struct gatekeeperd_server_conf *conf = malloc(sizeof(struct gatekeeperd_server_conf));
 	memset(conf, 0, sizeof(struct gatekeeperd_server_conf));
 
-    // TODO: fill up the gatekeeperd configurations
-
+    /*
+     * TODO: fill up the gatekeeperd configurations
+     */
 	fclose(fp);
 	return conf;
 }
