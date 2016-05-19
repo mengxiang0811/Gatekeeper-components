@@ -5,7 +5,8 @@
 
 #define GATEKEEPERD_MAX_PORTS (4)
 
-struct gatekeeperd_port_conf
+/* common for both gatekeeperd and grantord */
+struct server_port_conf
 {
 	uint8_t mac_addr[6];
 	uint8_t ip_addr[4];
@@ -20,7 +21,7 @@ struct gatekeeperd_port_conf
 struct gatekeeperd_server_conf
 {
 	uint8_t num_ports;
-	struct gatekeeperd_port_conf ports[GATEKEEPERD_MAX_PORTS];
+	struct server_port_conf ports[GATEKEEPERD_MAX_PORTS];
 	uint8_t num_threads;
 };
 
