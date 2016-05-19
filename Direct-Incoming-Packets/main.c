@@ -62,6 +62,8 @@ signal_handler(int signum)
 static int
 gatekeekperd_server_proc(void *arg) 
 {
+	uint32_t lcore = rte_lcore_id();
+	printf("Gatekeeper is running at lcore = %u\n", lcore);
     while (!exiting) 
     {
     }
@@ -96,10 +98,12 @@ main(int argc, char **argv)
     if (ret < 0)
         rte_panic("Cannot init EAL\n");
 
+#ifdef GATEKEEPER_NETWORK
     /* 
      * TODO: setup the aplication lcores 
      */
 
+	uint8_t num_ports_max = 0;
     /* should be in the configuration file*/
     uint64_t cpu_mask = ((uint64_t)1 << 4) - 1;
 	uint64_t port_mask = ((size_t)1 << 4) - 1;
@@ -107,7 +111,7 @@ main(int argc, char **argv)
 	if (!gatekeeperd_init_network(cpu_mask, port_mask, &num_ports_max))
 	{
 		fprintf(stderr, "failed to initialize network\n");
-		return;
+		return -1;
 	}
 	assert(4 <= num_ports_max);
 
@@ -120,9 +124,11 @@ main(int argc, char **argv)
     	if (rte_eth_dev_mac_addr_add(port_id, &mac_addr, 0) != 0)
     	{
 			fprintf(stderr, "failed to add a MAC address\n");
-			return;
+			return -1;
     	}
     }
+
+#endif
 
     printf("running gatekeeper servers\n");
     struct sigaction new_action;

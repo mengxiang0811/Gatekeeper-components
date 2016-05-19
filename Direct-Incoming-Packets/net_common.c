@@ -9,10 +9,12 @@
 #include <rte_ethdev.h>
 #include <rte_log.h>
 #include <rte_debug.h>
+#include <rte_malloc.h>
 
 #include "net_common.h"
 
 #define GATEKEEPERD_MBUF_ENTRY_SIZE (2048 + sizeof(struct rte_mbuf) + RTE_PKTMBUF_HEADROOM)
+#define GATEKEEPERD_MBUF_SIZE (GATEKEEPERD_MAX_PORTS * GATEKEEPERD_MAX_QUEUES * 4096)
 #define GATEKEEPERD_MAX_PKT_BURST   (32)
 
 #define GATEKEEPERD_NB_RX_DESC (128)
@@ -123,7 +125,7 @@ gatekeeperd_receive_packet(uint8_t port_id)
 
 	if (state->rx_next_to_use < state->rx_length)
     {
-        printf("gatekeepered_receive_packet: lcore=%zu, port=%zu, queue=%zu\n", lcore, port, queue);
+        printf("gatekeepered_receive_packet: lcore=%u, port=%hhu, queue=%u\n", lcore, port_id, queue);
 		return state->rx_mbufs[state->rx_next_to_use++];
     }
 	else
@@ -138,6 +140,7 @@ gatekeeperd_receive_packets(uint8_t port_id, struct rte_mbuf **mbufs, size_t *in
 	struct gatekeeperd_queue_state *state = gatekeeperd_queue_states[queue * GATEKEEPERD_MAX_PORTS + port_id];
 
 	*in_out_num_mbufs = (size_t)rte_eth_rx_burst(port_id, queue, mbufs, (uint16_t)*in_out_num_mbufs);
+	state->num_rx_received += *in_out_num_mbufs;
 }
 
 /* the VLAN insertion & IP packets encapsulation may happen here */
@@ -148,7 +151,7 @@ gatekeeperd_send_packet(uint8_t port_id, struct rte_mbuf *mbuf)
 	uint16_t queue = (uint16_t)lcore;
 	struct gatekeeperd_queue_state *state = gatekeeperd_queue_states[queue * GATEKEEPERD_MAX_PORTS + port_id];
 
-    printf("gatekeeperd_send_packet: lcore=%zu, port=%zu, queue=%zu\n", lcore, port, queue);
+    printf("gatekeeperd_send_packet: lcore=%u, port=%hhu, queue=%u\n", lcore, port_id, queue);
 
 	state->tx_mbufs[state->tx_length++] = mbuf;
 	if (state->tx_length == GATEKEEPERD_MAX_PKT_BURST)
@@ -188,7 +191,6 @@ gatekeeperd_send_packet_flush(uint8_t port_id)
 			rte_pktmbuf_free(state->tx_mbufs[count]);
 	
         state->tx_length = 0;
-		state->num_tx_burst++;
 	}
 }
 
@@ -198,7 +200,7 @@ gatekeeperd_clone_packet(struct rte_mbuf *mbuf_src)
 	return rte_pktmbuf_clone(mbuf_src, gatekeeperd_pktmbuf_pool[rte_socket_id()]);
 }
 
-bool
+int
 gatekeeperd_init_network(uint64_t cpu_mask, uint64_t port_mask, uint8_t *out_num_ports)
 {
 	int ret;
@@ -240,25 +242,17 @@ gatekeeperd_init_network(uint64_t cpu_mask, uint64_t port_mask, uint8_t *out_num
 		if (gatekeeperd_pktmbuf_pool[i] == NULL)
 		{
 			fprintf(stderr, "failed to allocate mbuf for numa node %zu\n", i);
-			return false;
+			return 0;
 		}
 	}
 
-	/* initialize driver */
-#ifdef RTE_LIBRTE_IXGBE_PMD
-	printf("initializing PMD\n");
-	if (rte_ixgbe_pmd_init() < 0)
-	{
-		fprintf(stderr, "failed to initialize ixgbe pmd\n");
-		return false;
-	}
-#endif
+	/* TODO: initialize PMD driver */
 
 	printf("probing PCI\n");
 	if (rte_eal_pci_probe() < 0)
 	{
 		fprintf(stderr, "failed to probe PCI\n");
-		return false;
+		return 0;
 	}
 
 	/* check port and queue limits */
@@ -279,7 +273,7 @@ gatekeeperd_init_network(uint64_t cpu_mask, uint64_t port_mask, uint8_t *out_num
 		if (num_queues > dev_info.max_tx_queues || num_queues > dev_info.max_rx_queues)
 		{
 			fprintf(stderr, "device supports too few queues\n");
-			return false;
+			return 0;
 		}
 	}
 
@@ -295,7 +289,7 @@ gatekeeperd_init_network(uint64_t cpu_mask, uint64_t port_mask, uint8_t *out_num
 		if (ret < 0)
 		{
 			fprintf(stderr, "failed to configure port %hhu (err=%d)\n", port_id, ret);
-			return false;
+			return 0;
 		}
 
 		uint32_t lcore;
@@ -309,14 +303,14 @@ gatekeeperd_init_network(uint64_t cpu_mask, uint64_t port_mask, uint8_t *out_num
 			if (ret < 0)
 			{
 				fprintf(stderr, "failed to configure port %hhu rx_queue %hu (err=%d)\n", port_id, queue, ret);
-				return false;
+				return 0;
 			}
 
 			ret = rte_eth_tx_queue_setup(port_id, queue, (unsigned int)nb_tx_desc, (unsigned int)numa_node, &gatekeeperd_tx_conf);
 			if (ret < 0)
 			{
 				fprintf(stderr, "failed to configure port %hhu tx_queue %hu (err=%d)\n", port_id, queue, ret);
-				return false;
+				return 0;
 			}
 		}
 
@@ -325,7 +319,7 @@ gatekeeperd_init_network(uint64_t cpu_mask, uint64_t port_mask, uint8_t *out_num
 		if (ret < 0)
 		{
 			fprintf(stderr, "failed to start port %hhu (err=%d)\n", port_id, ret);
-			return false;
+			return 0;
 		}
 	}
 
@@ -342,12 +336,13 @@ gatekeeperd_init_network(uint64_t cpu_mask, uint64_t port_mask, uint8_t *out_num
 		if (!link.link_status)
 		{
 			printf("link down\n");
-			return false;
+			return 0;
 		}
 
 		printf("%hu Gbps (%s)\n", link.link_speed / 1000, (link.link_duplex == ETH_LINK_FULL_DUPLEX) ? ("full-duplex") : ("half-duplex"));
 	}
 
+	uint32_t lcore;
 	memset(gatekeeperd_queue_states, 0, sizeof(gatekeeperd_queue_states));
 	for (port_id = 0; port_id < num_ports; port_id++) 
     {
@@ -363,7 +358,7 @@ gatekeeperd_init_network(uint64_t cpu_mask, uint64_t port_mask, uint8_t *out_num
 		}
     }
 
-	return true;
+	return 1;
 }
 
 void
