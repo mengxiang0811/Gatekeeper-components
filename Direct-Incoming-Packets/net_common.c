@@ -96,7 +96,7 @@ static struct rte_mempool *gatekeeperd_pktmbuf_pool[GATEKEEPERD_MAX_NUMA_NODES];
 static struct gatekeeperd_queue_state *gatekeeperd_queue_states[GATEKEEPERD_MAX_QUEUES * GATEKEEPERD_MAX_PORTS];
 
 struct rte_mbuf *
-gatekeeperd_packet_alloc()
+gatekeeperd_packet_alloc(void)
 {
 	return rte_pktmbuf_alloc(gatekeeperd_pktmbuf_pool[rte_socket_id()]);
 }

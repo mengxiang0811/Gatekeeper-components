@@ -18,6 +18,8 @@
 #include <errno.h>
 /* Use queue(3) macros rather than rolling your own lists, whenever possible */
 #include <sys/queue.h> 
+#include <assert.h>
+#include <signal.h>
 
 #include <rte_eal.h>
 
@@ -34,7 +36,7 @@
 #include "net_common.h"
 #include "net_config.h"
 
-static volatile bool exiting = false;
+static volatile int exiting = 0;
 
 static void
 signal_handler(int signum)
@@ -45,7 +47,7 @@ signal_handler(int signum)
         fprintf(stderr, "caught SIGTERM\n");
     else
         fprintf(stderr, "caught unknown signal\n");
-    exiting = true;
+    exiting = 1;
 }
 
 /* 
@@ -76,7 +78,6 @@ int
 main(int argc, char **argv)
 {
     int ret;
-    unsigned lcore_id;
 
     /* 
      * TODO: define the format of the command, and parse the command; 
@@ -132,7 +133,7 @@ main(int argc, char **argv)
     sigaction(SIGTERM, &new_action, NULL);
 
     uint8_t thread_id;
-    for (thread_id = 1; thread_id < workload_conf->num_threads; thread_id++)
+    for (thread_id = 1; thread_id < 4; thread_id++)
         rte_eal_remote_launch(gatekeekperd_server_proc, NULL, (unsigned int)thread_id);
 
     gatekeekperd_server_proc(NULL);

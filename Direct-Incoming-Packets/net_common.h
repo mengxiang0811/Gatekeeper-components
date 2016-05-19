@@ -10,7 +10,7 @@
 #define GATEKEEPERD_MAX_QUEUES (16)
 
 struct rte_mbuf *
-gatekeeperd_packet_alloc();
+gatekeeperd_packet_alloc(void);
 
 void
 gatekeeperd_packet_free(struct rte_mbuf *mbuf);
