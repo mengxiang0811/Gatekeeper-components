@@ -63,7 +63,7 @@ static int
 gatekeekperd_server_proc(void *arg) 
 {
 	uint32_t lcore = rte_lcore_id();
-	printf("Gatekeeper is running at lcore = %u\n", lcore);
+	printf("Gatekeeperd deamon is running at lcore = %u\n", lcore);
     while (!exiting) 
     {
     }
