@@ -8,7 +8,6 @@
 #define GATEKEEPERD_MAX_LCORES (4)
 #define GATEKEEPERD_MAX_NUMA_NODES (1)
 #define GATEKEEPERD_MAX_QUEUES (4)
-#define GATEKEEPERD_MAX_PORTS (4)
 #define RSS_HASH_KEY_LENGTH (40)
 
 struct rte_mbuf *

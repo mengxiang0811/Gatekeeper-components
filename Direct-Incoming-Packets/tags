@@ -1,0 +1,60 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+APP	Makefile	/^APP = gatekeeperd$/;"	m
+GATEKEEPERD_MAX_LCORES	net_common.h	/^#define GATEKEEPERD_MAX_LCORES /;"	d
+GATEKEEPERD_MAX_NUMA_NODES	net_common.h	/^#define GATEKEEPERD_MAX_NUMA_NODES /;"	d
+GATEKEEPERD_MAX_PKT_BURST	net_common.c	/^#define GATEKEEPERD_MAX_PKT_BURST /;"	d	file:
+GATEKEEPERD_MAX_PORTS	net_common.h	/^#define GATEKEEPERD_MAX_PORTS /;"	d
+GATEKEEPERD_MAX_PORTS	net_config.h	/^#define GATEKEEPERD_MAX_PORTS /;"	d
+GATEKEEPERD_MAX_QUEUES	net_common.h	/^#define GATEKEEPERD_MAX_QUEUES /;"	d
+GATEKEEPERD_MBUF_ENTRY_SIZE	net_common.c	/^#define GATEKEEPERD_MBUF_ENTRY_SIZE /;"	d	file:
+GATEKEEPERD_MBUF_SIZE	net_common.c	/^#define GATEKEEPERD_MBUF_SIZE /;"	d	file:
+GATEKEEPERD_NB_RX_DESC	net_common.c	/^#define GATEKEEPERD_NB_RX_DESC /;"	d	file:
+GATEKEEPERD_NB_TX_DESC	net_common.c	/^#define GATEKEEPERD_NB_TX_DESC /;"	d	file:
+RSS_HASH_KEY_LENGTH	net_common.h	/^#define RSS_HASH_KEY_LENGTH /;"	d
+RTE_TARGET	Makefile	/^RTE_TARGET ?= x86_64-native-linuxapp-gcc$/;"	m
+SRCS-y	Makefile	/^SRCS-y := main.c net_common.c net_config.c$/;"	m
+_NET_COMMON_H	net_common.h	/^#define _NET_COMMON_H$/;"	d
+_NET_CONFIG_H	net_config.h	/^#define _NET_CONFIG_H$/;"	d
+__rte_cache_aligned	net_common.c	/^} __rte_cache_aligned;$/;"	v	typeref:struct:gatekeeperd_queue_state
+exiting	main.c	/^static volatile int exiting = 0;$/;"	v	file:
+gatekeekperd_server_proc	main.c	/^gatekeekperd_server_proc(void *arg) $/;"	f	file:
+gatekeeperd_clone_packet	net_common.c	/^gatekeeperd_clone_packet(struct rte_mbuf *mbuf_src)$/;"	f
+gatekeeperd_free_network	net_common.c	/^gatekeeperd_free_network(uint64_t port_mask)$/;"	f
+gatekeeperd_get_server_conf	net_config.c	/^gatekeeperd_get_server_conf(const char *filename, const char *server_name)$/;"	f
+gatekeeperd_init_network	net_common.c	/^gatekeeperd_init_network(uint64_t cpu_mask, uint64_t port_mask, uint8_t *out_num_ports)$/;"	f
+gatekeeperd_packet_alloc	net_common.c	/^gatekeeperd_packet_alloc(void)$/;"	f
+gatekeeperd_packet_free	net_common.c	/^gatekeeperd_packet_free(struct rte_mbuf *mbuf)$/;"	f
+gatekeeperd_pktmbuf_pool	net_common.c	/^static struct rte_mempool *gatekeeperd_pktmbuf_pool[GATEKEEPERD_MAX_NUMA_NODES];$/;"	v	typeref:struct:rte_mempool	file:
+gatekeeperd_port_conf	net_common.c	/^static const struct rte_eth_conf gatekeeperd_port_conf = {$/;"	v	typeref:struct:rte_eth_conf	file:
+gatekeeperd_queue_state	net_common.c	/^struct gatekeeperd_queue_state $/;"	s	file:
+gatekeeperd_queue_states	net_common.c	/^static struct gatekeeperd_queue_state *gatekeeperd_queue_states[GATEKEEPERD_MAX_QUEUES * GATEKEEPERD_MAX_PORTS];$/;"	v	typeref:struct:gatekeeperd_queue_state	file:
+gatekeeperd_receive_packet	net_common.c	/^gatekeeperd_receive_packet(uint8_t port_id)$/;"	f
+gatekeeperd_receive_packets	net_common.c	/^gatekeeperd_receive_packets(uint8_t port_id, struct rte_mbuf **mbufs, size_t *in_out_num_mbufs)$/;"	f
+gatekeeperd_rx_conf	net_common.c	/^static const struct rte_eth_rxconf gatekeeperd_rx_conf = {$/;"	v	typeref:struct:rte_eth_rxconf	file:
+gatekeeperd_send_packet	net_common.c	/^gatekeeperd_send_packet(uint8_t port_id, struct rte_mbuf *mbuf)$/;"	f
+gatekeeperd_send_packet_flush	net_common.c	/^gatekeeperd_send_packet_flush(uint8_t port_id)$/;"	f
+gatekeeperd_server_conf	net_config.h	/^struct gatekeeperd_server_conf$/;"	s
+gatekeeperd_tx_conf	net_common.c	/^static const struct rte_eth_txconf gatekeeperd_tx_conf = {$/;"	v	typeref:struct:rte_eth_txconf	file:
+hash_key	net_common.c	/^static uint8_t hash_key[RSS_HASH_KEY_LENGTH] = $/;"	v	file:
+ip_addr	net_config.h	/^	uint8_t ip_addr[4];$/;"	m	struct:server_port_conf
+mac_addr	net_config.h	/^	uint8_t mac_addr[6];$/;"	m	struct:server_port_conf
+main	main.c	/^main(int argc, char **argv)$/;"	f
+nb_rx_desc	net_common.c	/^static uint16_t nb_rx_desc = GATEKEEPERD_NB_RX_DESC;$/;"	v	file:
+nb_tx_desc	net_common.c	/^static uint16_t nb_tx_desc = GATEKEEPERD_NB_TX_DESC;$/;"	v	file:
+num_ports	net_config.h	/^	uint8_t num_ports;$/;"	m	struct:gatekeeperd_server_conf
+num_rx_received	net_common.c	/^	uint64_t num_rx_received;$/;"	m	struct:gatekeeperd_queue_state	file:
+num_threads	net_config.h	/^	uint8_t num_threads;$/;"	m	struct:gatekeeperd_server_conf
+num_tx_sent	net_common.c	/^	uint64_t num_tx_sent;$/;"	m	struct:gatekeeperd_queue_state	file:
+ports	net_config.h	/^	struct server_port_conf ports[GATEKEEPERD_MAX_PORTS];$/;"	m	struct:gatekeeperd_server_conf	typeref:struct:gatekeeperd_server_conf::server_port_conf
+rx_length	net_common.c	/^	uint16_t rx_length;$/;"	m	struct:gatekeeperd_queue_state	file:
+rx_mbufs	net_common.c	/^	struct rte_mbuf *rx_mbufs[GATEKEEPERD_MAX_PKT_BURST];$/;"	m	struct:gatekeeperd_queue_state	typeref:struct:gatekeeperd_queue_state::rte_mbuf	file:
+rx_next_to_use	net_common.c	/^	uint16_t rx_next_to_use;$/;"	m	struct:gatekeeperd_queue_state	file:
+server_port_conf	net_config.h	/^struct server_port_conf$/;"	s
+signal_handler	main.c	/^signal_handler(int signum)$/;"	f	file:
+tx_length	net_common.c	/^	uint16_t tx_length;$/;"	m	struct:gatekeeperd_queue_state	file:
+tx_mbufs	net_common.c	/^	struct rte_mbuf *tx_mbufs[GATEKEEPERD_MAX_PKT_BURST];$/;"	m	struct:gatekeeperd_queue_state	typeref:struct:gatekeeperd_queue_state::rte_mbuf	file:
