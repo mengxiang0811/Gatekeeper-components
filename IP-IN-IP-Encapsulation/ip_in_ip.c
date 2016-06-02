@@ -24,7 +24,7 @@ init_hdr_templates(void)
 	memset(l2_hdr_template, 0, sizeof(l2_hdr_template));
 
 	ip_hdr_template[0].version_ihl = IP_VHL_DEF;
-	ip_hdr_template[0].type_of_service = 0; 
+	ip_hdr_template[0].type_of_service = (2 << 2); // default DSCP 2 
 	ip_hdr_template[0].total_length = 0; 
 	ip_hdr_template[0].packet_id = 0;
 	ip_hdr_template[0].fragment_offset = IP_DN_FRAGMENT_FLAG;
