@@ -15,11 +15,42 @@ static struct ether_hdr l2_hdr_template[SERVER_MAX_PORTS];
 /*
  * TODO: Read IP in iP Tunneling configuration information
  * We may need to configurate each port separately
+ *
  */
-void
+	void
 init_hdr_templates(void)
 {
-    return;
+	memset(ip_hdr_template, 0, sizeof(ip_hdr_template));
+	memset(l2_hdr_template, 0, sizeof(l2_hdr_template));
+
+	ip_hdr_template[0].version_ihl = IP_VHL_DEF;
+	ip_hdr_template[0].type_of_service = 0; 
+	ip_hdr_template[0].total_length = 0; 
+	ip_hdr_template[0].packet_id = 0;
+	ip_hdr_template[0].fragment_offset = IP_DN_FRAGMENT_FLAG;
+	ip_hdr_template[0].time_to_live = IP_DEFTTL;
+	ip_hdr_template[0].next_proto_id = IPPROTO_IPIP;
+	ip_hdr_template[0].hdr_checksum = 0;
+	ip_hdr_template[0].src_addr = rte_cpu_to_be_32(0x00000000);
+	ip_hdr_template[0].dst_addr = rte_cpu_to_be_32(0xFFFFFFFF);
+
+	l2_hdr_template[0].d_addr.addr_bytes[0] = 0x0a;
+	l2_hdr_template[0].d_addr.addr_bytes[1] = 0x00;
+	l2_hdr_template[0].d_addr.addr_bytes[2] = 0x27;
+	l2_hdr_template[0].d_addr.addr_bytes[3] = 0x00;
+	l2_hdr_template[0].d_addr.addr_bytes[4] = 0x00;
+	l2_hdr_template[0].d_addr.addr_bytes[5] = 0x01;
+
+	l2_hdr_template[0].s_addr.addr_bytes[0] = 0x08;
+	l2_hdr_template[0].s_addr.addr_bytes[1] = 0x00;
+	l2_hdr_template[0].s_addr.addr_bytes[2] = 0x27;
+	l2_hdr_template[0].s_addr.addr_bytes[3] = 0x7d;
+	l2_hdr_template[0].s_addr.addr_bytes[4] = 0xc7;
+	l2_hdr_template[0].s_addr.addr_bytes[5] = 0x68;
+
+	l2_hdr_template[0].ether_type = rte_cpu_to_be_16(ETHER_TYPE_IPv4);
+
+	return;
 }
 
 /*
@@ -27,7 +58,7 @@ init_hdr_templates(void)
  * ipproto. This function is able to recognize IPv4/IPv6 with one optional vlan
  * header.
  */
-static void
+	static void
 parse_ethernet(struct ether_hdr *eth_hdr, union tunnel_offload_info *info,
 		uint8_t *l4_proto)
 {
@@ -45,34 +76,34 @@ parse_ethernet(struct ether_hdr *eth_hdr, union tunnel_offload_info *info,
 	}
 
 	switch (ethertype) {
-	case ETHER_TYPE_IPv4:
-		ipv4_hdr = (struct ipv4_hdr *)
-			((char *)eth_hdr + info->outer_l2_len);
-		info->outer_l3_len = sizeof(struct ipv4_hdr);
-		*l4_proto = ipv4_hdr->next_proto_id;
-		break;
-	case ETHER_TYPE_IPv6:
-		ipv6_hdr = (struct ipv6_hdr *)
-			((char *)eth_hdr + info->outer_l2_len);
-		info->outer_l3_len = sizeof(struct ipv6_hdr);
-		*l4_proto = ipv6_hdr->proto;
-		break;
-	default:
-		info->outer_l3_len = 0;
-		*l4_proto = 0;
-		break;
+		case ETHER_TYPE_IPv4:
+			ipv4_hdr = (struct ipv4_hdr *)
+				((char *)eth_hdr + info->outer_l2_len);
+			info->outer_l3_len = sizeof(struct ipv4_hdr);
+			*l4_proto = ipv4_hdr->next_proto_id;
+			break;
+		case ETHER_TYPE_IPv6:
+			ipv6_hdr = (struct ipv6_hdr *)
+				((char *)eth_hdr + info->outer_l2_len);
+			info->outer_l3_len = sizeof(struct ipv6_hdr);
+			*l4_proto = ipv6_hdr->proto;
+			break;
+		default:
+			info->outer_l3_len = 0;
+			*l4_proto = 0;
+			break;
 	}
 }
 
-int
+	int
 decapsulation(struct rte_mbuf *pkt)
 {
 	uint8_t l4_proto = 0;
 	uint16_t outer_header_len;
 
-	union tunnel_offload_info info = { .tx_offload = 0 };
-	
-    struct ether_hdr *phdr = rte_pktmbuf_mtod(pkt, struct ether_hdr *);
+	union tunnel_offload_info info = { .data = 0 };
+
+	struct ether_hdr *phdr = rte_pktmbuf_mtod(pkt, struct ether_hdr *);
 
 	parse_ethernet(phdr, &info, &l4_proto);
 
@@ -80,6 +111,8 @@ decapsulation(struct rte_mbuf *pkt)
 		return -1;
 
 	outer_header_len = info.outer_l2_len + info.outer_l3_len;
+
+	printf("In decapsulation: the outer header len is = %d\n", outer_header_len);
 
 	rte_pktmbuf_adj(pkt, outer_header_len);
 
@@ -91,47 +124,52 @@ decapsulation(struct rte_mbuf *pkt)
  *
  * main overhead: 1 rte_pktmbuf_prepend + 2 rte_memcpy
  */
-void
+	void
 encapsulation(struct rte_mbuf *m, uint8_t port_id)
 {
 	uint64_t ol_flags = 0;
-	union tunnel_offload_info tx_offload = { .tx_offload = 0 };
-	struct ether_hdr *phdr = rte_pktmbuf_mtod(m, struct ether_hdr *);
+	//union tunnel_offload_info info = { .data = 0 };
+	//struct ether_hdr *phdr = rte_pktmbuf_mtod(m, struct ether_hdr *);
 
-	/* allocate space for new IPv4 header */
+	/* allocate space for new Ethernet + IPv4 header */
 	struct ether_hdr *pneth = (struct ether_hdr *) rte_pktmbuf_prepend(m,
-            sizeof(struct ipv4_hdr));
+			sizeof(struct ether_hdr) + sizeof(struct ipv4_hdr));
 
 	struct ipv4_hdr *ip = (struct ipv4_hdr *) &pneth[1];
 
 	/* 
-     * We may need new MAC addresses after tunneling
-     * Since we can only fill the Ethernet header and new IP header,
-     * the overhead should be slight.
-     *
-     * Fill up the Ethernet + IP headers with our templates
-     */
+	 * We may need new MAC addresses after tunneling
+	 * Since we can only fill the Ethernet header and new IP header,
+	 * the overhead should be slight.
+	 *
+	 * Fill up the Ethernet + IP headers with our templates
+	 */
 	pneth = rte_memcpy(pneth, &l2_hdr_template[port_id],
-		sizeof(struct ether_hdr));
-	
-    ip = rte_memcpy(ip, &ip_hdr_template[port_id],
-		sizeof(struct ipv4_hdr));
-	
-    ip->total_length = rte_cpu_to_be_16(m->data_len
-				- sizeof(struct ether_hdr));
+			sizeof(struct ether_hdr));
+
+	ip = rte_memcpy(ip, &ip_hdr_template[port_id],
+			sizeof(struct ipv4_hdr));
+
+	ip->total_length = rte_cpu_to_be_16(m->data_len
+			- sizeof(struct ether_hdr));
 
 	/*
-     * configure TX offload on a ip-in-ip-encapsulated tcp packet:
-     *      out_eth/out_ip/in_ip/in_tcp/payload
-     *
-     * Now, only calculate outer IP checksum
-     * if necessary, change here to calculate checksum of out_ip, in_ip, in_tcp
-     */
-	ol_flags |= (PKT_TX_IPV4 | PKT_TX_IP_CSUM);
+	 * configure TX offload on a ip-in-ip-encapsulated tcp packet:
+	 *      out_eth/out_ip/in_ip/in_tcp/payload
+	 *
+	 * Now, only calculate outer IP checksum
+	 * if necessary, change here to calculate checksum of out_ip, in_ip, in_tcp
+	 */
+	ol_flags |= PKT_TX_OUTER_IP_CKSUM;
 	ip->hdr_checksum = 0;
-	m->l2_len = sizeof(struct ether_hdr);
-	m->l3_len = sizeof(struct ipv4_hdr);
+
+	m->outer_l2_len = sizeof(struct ether_hdr);
+	m->outer_l3_len = sizeof(struct ipv4_hdr);
 	m->ol_flags |= ol_flags;
+
+	//ol_flags |= (PKT_TX_IPV4 | PKT_TX_IP_CKSUM);
+	//m->l2_len = sizeof(struct ether_hdr);
+	//m->l3_len = sizeof(struct ipv4_hdr);
 
 	return;
 }
