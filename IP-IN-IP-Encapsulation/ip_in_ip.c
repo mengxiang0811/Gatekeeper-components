@@ -160,16 +160,19 @@ encapsulation(struct rte_mbuf *m, uint8_t port_id)
 	 * Now, only calculate outer IP checksum
 	 * if necessary, change here to calculate checksum of out_ip, in_ip, in_tcp
 	 */
-	ol_flags |= PKT_TX_OUTER_IP_CKSUM;
 	ip->hdr_checksum = 0;
 
+	//ol_flags |= PKT_TX_OUTER_IP_CKSUM;
+	//m->outer_l2_len = sizeof(struct ether_hdr);
+	//m->outer_l3_len = sizeof(struct ipv4_hdr);
+	//m->ol_flags |= ol_flags;
+
+	ol_flags |= (PKT_TX_IPV4 | PKT_TX_IP_CKSUM | PKT_TX_OUTER_IPV4);
+	//m->l2_len = sizeof(struct ether_hdr);
+	//m->l3_len = sizeof(struct ipv4_hdr);
 	m->outer_l2_len = sizeof(struct ether_hdr);
 	m->outer_l3_len = sizeof(struct ipv4_hdr);
 	m->ol_flags |= ol_flags;
-
-	//ol_flags |= (PKT_TX_IPV4 | PKT_TX_IP_CKSUM);
-	//m->l2_len = sizeof(struct ether_hdr);
-	//m->l3_len = sizeof(struct ipv4_hdr);
 
 	return;
 }
