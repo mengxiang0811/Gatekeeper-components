@@ -9,8 +9,10 @@
 
 #include "ip_in_ip.h"
 
-static struct ipv4_hdr ip_hdr_template[SERVER_MAX_PORTS];
-static struct ether_hdr l2_hdr_template[SERVER_MAX_PORTS];
+static struct ipv4_hdr ip_hdr4_template[SERVER_MAX_PORTS];
+static struct ipv6_hdr ip_hdr6_template[SERVER_MAX_PORTS];
+static struct ether_hdr l2_hdr4_template[SERVER_MAX_PORTS];
+static struct ether_hdr l2_hdr6_template[SERVER_MAX_PORTS];
 
 /*
  * TODO: Read IP in iP Tunneling configuration information
@@ -18,37 +20,73 @@ static struct ether_hdr l2_hdr_template[SERVER_MAX_PORTS];
  *
  */
 	void
-init_hdr_templates(void)
+init_hdr4_templates(void)
 {
-	memset(ip_hdr_template, 0, sizeof(ip_hdr_template));
-	memset(l2_hdr_template, 0, sizeof(l2_hdr_template));
+	memset(ip_hdr4_template, 0, sizeof(ip_hdr4_template));
+	memset(l2_hdr4_template, 0, sizeof(l2_hdr4_template));
 
-	ip_hdr_template[0].version_ihl = IP_VHL_DEF;
-	ip_hdr_template[0].type_of_service = (2 << 2); // default DSCP 2 
-	ip_hdr_template[0].total_length = 0; 
-	ip_hdr_template[0].packet_id = 0;
-	ip_hdr_template[0].fragment_offset = IP_DN_FRAGMENT_FLAG;
-	ip_hdr_template[0].time_to_live = IP_DEFTTL;
-	ip_hdr_template[0].next_proto_id = IPPROTO_IPIP;
-	ip_hdr_template[0].hdr_checksum = 0;
-	ip_hdr_template[0].src_addr = rte_cpu_to_be_32(0x00000000);
-	ip_hdr_template[0].dst_addr = rte_cpu_to_be_32(0xFFFFFFFF);
+	ip_hdr4_template[0].version_ihl = IP_VHL_DEF;
+	ip_hdr4_template[0].type_of_service = (2 << 2); // default DSCP 2 
+	ip_hdr4_template[0].total_length = 0; 
+	ip_hdr4_template[0].packet_id = 0;
+	ip_hdr4_template[0].fragment_offset = IP_DN_FRAGMENT_FLAG;
+	ip_hdr4_template[0].time_to_live = IP_DEFTTL;
+	ip_hdr4_template[0].next_proto_id = IPPROTO_IPIP;
+	ip_hdr4_template[0].hdr_checksum = 0;
+	ip_hdr4_template[0].src_addr = rte_cpu_to_be_32(0x00000000);
+	ip_hdr4_template[0].dst_addr = rte_cpu_to_be_32(0xFFFFFFFF);
 
-	l2_hdr_template[0].d_addr.addr_bytes[0] = 0x0a;
-	l2_hdr_template[0].d_addr.addr_bytes[1] = 0x00;
-	l2_hdr_template[0].d_addr.addr_bytes[2] = 0x27;
-	l2_hdr_template[0].d_addr.addr_bytes[3] = 0x00;
-	l2_hdr_template[0].d_addr.addr_bytes[4] = 0x00;
-	l2_hdr_template[0].d_addr.addr_bytes[5] = 0x01;
+	l2_hdr4_template[0].d_addr.addr_bytes[0] = 0x0a;
+	l2_hdr4_template[0].d_addr.addr_bytes[1] = 0x00;
+	l2_hdr4_template[0].d_addr.addr_bytes[2] = 0x27;
+	l2_hdr4_template[0].d_addr.addr_bytes[3] = 0x00;
+	l2_hdr4_template[0].d_addr.addr_bytes[4] = 0x00;
+	l2_hdr4_template[0].d_addr.addr_bytes[5] = 0x01;
 
-	l2_hdr_template[0].s_addr.addr_bytes[0] = 0x08;
-	l2_hdr_template[0].s_addr.addr_bytes[1] = 0x00;
-	l2_hdr_template[0].s_addr.addr_bytes[2] = 0x27;
-	l2_hdr_template[0].s_addr.addr_bytes[3] = 0x7d;
-	l2_hdr_template[0].s_addr.addr_bytes[4] = 0xc7;
-	l2_hdr_template[0].s_addr.addr_bytes[5] = 0x68;
+	l2_hdr4_template[0].s_addr.addr_bytes[0] = 0x08;
+	l2_hdr4_template[0].s_addr.addr_bytes[1] = 0x00;
+	l2_hdr4_template[0].s_addr.addr_bytes[2] = 0x27;
+	l2_hdr4_template[0].s_addr.addr_bytes[3] = 0x7d;
+	l2_hdr4_template[0].s_addr.addr_bytes[4] = 0xc7;
+	l2_hdr4_template[0].s_addr.addr_bytes[5] = 0x68;
 
-	l2_hdr_template[0].ether_type = rte_cpu_to_be_16(ETHER_TYPE_IPv4);
+	l2_hdr4_template[0].ether_type = rte_cpu_to_be_16(ETHER_TYPE_IPv4);
+
+	return;
+}
+
+static uint8_t ip6_src[16] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+static uint8_t ip6_dst[16] = {2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+ 
+	void
+init_hdr6_templates(void)
+{
+	memset(ip_hdr6_template, 0, sizeof(ip_hdr6_template));
+	memset(l2_hdr6_template, 0, sizeof(l2_hdr6_template));
+
+	ip_hdr6_template[0].vtc_flow = rte_cpu_to_be_32(IPv6_DEFAULT_VTC_FLOW);
+	ip_hdr6_template[0].payload_len = 0;
+	ip_hdr6_template[0].proto = IPPROTO_IPIP; 
+	ip_hdr6_template[0].hop_limits = IPv6_DEFAULT_HOP_LIMITS;
+	
+	rte_memcpy(ip_hdr6_template[0].src_addr, ip6_src, sizeof(ip6_src));
+	rte_memcpy(ip_hdr6_template[0].dst_addr, ip6_dst, sizeof(ip6_dst));
+
+	l2_hdr6_template[0].d_addr.addr_bytes[0] = 0x0a;
+	l2_hdr6_template[0].d_addr.addr_bytes[1] = 0x00;
+	l2_hdr6_template[0].d_addr.addr_bytes[2] = 0x27;
+	l2_hdr6_template[0].d_addr.addr_bytes[3] = 0x00;
+	l2_hdr6_template[0].d_addr.addr_bytes[4] = 0x00;
+	l2_hdr6_template[0].d_addr.addr_bytes[5] = 0x01;
+
+	l2_hdr6_template[0].s_addr.addr_bytes[0] = 0x08;
+	l2_hdr6_template[0].s_addr.addr_bytes[1] = 0x00;
+	l2_hdr6_template[0].s_addr.addr_bytes[2] = 0x27;
+	l2_hdr6_template[0].s_addr.addr_bytes[3] = 0x7d;
+	l2_hdr6_template[0].s_addr.addr_bytes[4] = 0xc7;
+	l2_hdr6_template[0].s_addr.addr_bytes[5] = 0x68;
+
+	l2_hdr6_template[0].ether_type = rte_cpu_to_be_16(ETHER_TYPE_IPv6);
 
 	return;
 }
@@ -125,7 +163,7 @@ decapsulation(struct rte_mbuf *pkt)
  * main overhead: 1 rte_pktmbuf_prepend + 2 rte_memcpy
  */
 	void
-encapsulation(struct rte_mbuf *m, uint8_t port_id)
+encapsulation_v4(struct rte_mbuf *m, uint8_t port_id)
 {
 	uint64_t ol_flags = 0;
 	//union tunnel_offload_info info = { .data = 0 };
@@ -144,10 +182,10 @@ encapsulation(struct rte_mbuf *m, uint8_t port_id)
 	 *
 	 * Fill up the Ethernet + IP headers with our templates
 	 */
-	pneth = rte_memcpy(pneth, &l2_hdr_template[port_id],
+	pneth = rte_memcpy(pneth, &l2_hdr4_template[port_id],
 			sizeof(struct ether_hdr));
 
-	ip = rte_memcpy(ip, &ip_hdr_template[port_id],
+	ip = rte_memcpy(ip, &ip_hdr4_template[port_id],
 			sizeof(struct ipv4_hdr));
 
 	ip->total_length = rte_cpu_to_be_16(m->data_len
@@ -173,6 +211,37 @@ encapsulation(struct rte_mbuf *m, uint8_t port_id)
 	m->outer_l2_len = sizeof(struct ether_hdr);
 	m->outer_l3_len = sizeof(struct ipv4_hdr);
 	m->ol_flags |= ol_flags;
+
+	return;
+}
+	
+void
+encapsulation_v6(struct rte_mbuf *m, uint8_t port_id)
+{
+	/* allocate space for new Ethernet + IPv6 header */
+	struct ether_hdr *pneth = (struct ether_hdr *) rte_pktmbuf_prepend(m,
+			sizeof(struct ether_hdr) + sizeof(struct ipv6_hdr));
+
+	struct ipv6_hdr *ip = (struct ipv6_hdr *) &pneth[1];
+
+	/* 
+	 * We may need new MAC addresses after tunneling
+	 * Since we can only fill the Ethernet header and new IP header,
+	 * the overhead should be slight.
+	 *
+	 * Fill up the Ethernet + IPv6 headers with our templates
+	 */
+	pneth = rte_memcpy(pneth, &l2_hdr6_template[port_id],
+			sizeof(struct ether_hdr));
+
+	ip = rte_memcpy(ip, &ip_hdr6_template[port_id],
+			sizeof(struct ipv6_hdr));
+
+	ip->payload_len = rte_cpu_to_be_16(m->data_len
+			- sizeof(struct ether_hdr));
+
+	m->outer_l2_len = sizeof(struct ether_hdr);
+	m->outer_l3_len = sizeof(struct ipv6_hdr);
 
 	return;
 }

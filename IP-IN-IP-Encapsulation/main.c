@@ -115,7 +115,8 @@ lcore_main(void)
 {
 	uint8_t port;
 
-	init_hdr_templates();
+	init_hdr4_templates();
+	init_hdr6_templates();
 
 	for (port = 0; port < nb_ports; port++)
 		if (rte_eth_dev_socket_id(port) > 0 &&
@@ -150,7 +151,7 @@ lcore_main(void)
 				len = rte_pktmbuf_data_len(mbuf);
 				rte_pktmbuf_dump(stdout, mbuf, len);
 #if 1				
-				encapsulation(mbuf, 0);
+				encapsulation_v4(mbuf, 0);
 
 				printf("\t\t\t********************After Encap PKT*******************\n");
 				len = rte_pktmbuf_data_len(mbuf);
